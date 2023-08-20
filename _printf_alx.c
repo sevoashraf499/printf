@@ -6,14 +6,13 @@
  */
 int _printf(const char *format, ...)
 {
-	unsigned int i;
+	int num, i;
 	char c_char;
 	va_list input_arg;
 
 	if (format == NULL)
 		return (0);
 	va_start(input_arg, format);
-
 	for (i = 0; *format; format++, i++)
 	{
 		if (*format != '%')

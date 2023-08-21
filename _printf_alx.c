@@ -1,44 +1,62 @@
 #include "main.h"
+void print_buffer(char buffer[], int *buff_ind);
 /**
- * _printf - prints normal characters, %c specifer,%s specifer and % handeles
+ * _printf - prints all specifer and % handeles
  * @format: the character string argument
  * Return: thee number of printed characters to stdout
  */
 int _printf(const char *format, ...)
 {
-	int i;
-	char c_char;
-	va_list input_arg;
+	int i, printed = 0, printedChars = 0;
+	int activeFlags, fieldWidth, precision, specifierSize, bufferIndex = 0;
+	va_list args;
+	char outputBuffer[BUFF_SIZE];
 
 	if (format == NULL)
-		return (0);
-	va_start(input_arg, format);
-	for (i = 0; *format; format++, i++)
+		return (-1);
+	va_start(args, format);
+
+	for (i = 0; format && format[i] != '\0'; i++)
 	{
-		if (*format != '%')
-			write(1, format, 1);
+		if (format[i] != '%')
+		{
+			outputBuffer[bufferIndex++] = format[i];
+			if (bufferIndex == BUFF_SIZE)
+				write_buffer(outputBuffer, &bufferIndex);
+			printedChars++;
+		}
 		else
 		{
-			format++;
-			if (*format == '\0')
-				break;
-			if (*format == 'c')
-			{
-				c_char = va_arg(input_arg, int);
-				write(1, &c_char, 1);
-			}
-			else if (*format == 's')
-			{
-				char *s_str = va_arg(input_arg, char*);
-
-				write(1, s_str, strlen(s_str));
-				i += strlen(s_str);
-			}
-			else if (*format == '%')
-				write(1, format, 1);
+			write_buffer(outputBuffer, &bufferIndex);
+			activeFlags = get_flags(format, &i); /*active flags frm format stri*/
+			fieldWidth = get_width(format, &i, args); /*field widthformat string*/
+			precision = get_precision(format, &i, args); /*get precicion*/
+			specifierSize = get_size(format, &i); /*get size specifier*/
+			++i;
+			printed = handle_print(format, &i, args, outputBuffer,
+				activeFlags, fieldWidth, precision, specifierSize);
+			if (printed == -1)
+				return (-1);
+			printedChars += printed;
 		}
 	}
-	--i;
-	va_end(input_arg);
-	return (i);
+
+	write_buffer(outputBuffer, &bufferIndex);
+
+	va_end(args);
+
+	return (printedChars);
+}
+
+/**
+ * write_buffer - Prints the contents of the buffer if it exists
+ * @outputBuffer: Array of characters.
+ * @bufferIndex: Index at which to add the next charact length.
+ */
+void write_buffer(char outputBuffer[], int *bufferIndex)
+{
+	if (*bufferIndex > 0)
+		write(1, &outputBuffer[0], *bufferIndex); /* Write the buffer content*/
+
+	*bufferIndex = 0;
 }
